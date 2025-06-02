@@ -8,6 +8,13 @@ pub enum Color {
     Red,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Gameover {
+    Win(crate::color::Color),
+    Tie,
+    None,
+}
+
 impl Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

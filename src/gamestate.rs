@@ -1,6 +1,8 @@
-use crate::color::Color;
+use crate::color::{Color, Gameover};
 use colored::*;
 use std::fmt;
+
+const FULL_BOARD_MASK: u64 = 0x7BDEF7BDEF7BDEF;
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct GameState {
@@ -16,6 +18,15 @@ impl GameState {
             red: 0,
             yellow: 0,
             current_player: Color::Yellow,
+        }
+    }
+
+    pub fn gameover_state(&self) -> Gameover {
+        let board_full = !self.filled() & FULL_BOARD_MASK == 0;
+        if board_full {
+            Gameover::Tie
+        } else {
+            Gameover::None
         }
     }
 
@@ -94,7 +105,7 @@ impl fmt::Debug for GameState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     fn game_with_column(column: u8, pieces: u8) -> GameState {
         let mut game = GameState::new();
         for _ in 0..pieces {

@@ -1,10 +1,41 @@
-pub fn negamax(
-    board: &mut crate::gamestate::GameState,
-    depth: u8,
-    mut alpha: i32,
-    beta: i32,
-) -> i32 {
-    if depth == 0 || board.filled() == 0x3FFFFFFF {
+use crate::color::Gameover;
+use crate::gamestate::GameState;
+
+pub fn negamax_entrypoint(board: &GameState, depth: u8) -> u8 {
+    // Start the negamax algorithm with alpha and beta values
+    let mut best_move = 8; // Initialize with an invalid move
+    let mut best_eval = i32::MIN;
+
+    for column in 0..7 {
+        if board.get_height(column) < 6 {
+            let eval = negamax(board, depth, i32::MIN + 1, i32::MAX);
+            if eval > best_eval {
+                best_eval = eval;
+                best_move = column
+            }
+        }
+    }
+
+    best_move
+}
+
+fn negamax(board: &GameState, depth: u8, mut alpha: i32, beta: i32) -> i32 {
+    // Base case: game is over
+    match board.gameover_state() {
+        Gameover::Win(color) => {
+            // If the game has ended, then the next person to play has lost
+            return if color == board.current_player() {
+                -99999 // Opponent wins
+            } else {
+                99999 // Current player wins
+            };
+        }
+        Gameover::Tie => return 0,
+        Gameover::None => {}
+    }
+
+    // Tertiary Base case: if depth is 0, stop searching
+    if depth == 0 {
         return evaluate(board);
     }
 
@@ -29,6 +60,8 @@ pub fn negamax(
     max_eval
 }
 
-fn evaluate(board: &crate::gamestate::GameState) -> i32 {
+fn evaluate(board: &GameState) -> i32 {
+    // For now, a simple evaluation function that returns 0
+    // This should be replaced with a more sophisticated evaluation function
     0
 }
