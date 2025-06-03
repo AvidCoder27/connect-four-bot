@@ -21,6 +21,10 @@ impl GameState {
         }
     }
 
+    pub fn override_current_player(&mut self, color: Color) {
+        self.current_player = color;
+    }
+
     pub fn from_fen(s: &str, color: Option<Color>) -> Self {
         let mut game = GameState::new();
         let mut row = 5; // Start from top row
@@ -69,15 +73,13 @@ impl GameState {
             for col in 0..7 {
                 let bit_index = col * 7 + row;
                 let mask = 1u64 << bit_index;
-                result.push(
-                    if self.red & mask != 0 {
-                        'r'
-                    } else if self.yellow & mask != 0 {
-                        'y'
-                    } else {
-                        '.'
-                    }
-                );
+                result.push(if self.red & mask != 0 {
+                    'r'
+                } else if self.yellow & mask != 0 {
+                    'y'
+                } else {
+                    '.'
+                });
             }
             if row > 0 {
                 result.push('/');
@@ -186,7 +188,7 @@ impl fmt::Debug for GameState {
             writeln!(f, "|")?;
         }
 
-        writeln!(f, "  0  1  2  3  4  5  6") // Column indices
+        writeln!(f, "  1  2  3  4  5  6  7") // Column indices
     }
 }
 

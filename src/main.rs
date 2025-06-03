@@ -2,12 +2,11 @@ pub mod color;
 mod engine;
 mod gamestate;
 
+use core::panic;
 use std::ops::ControlFlow;
 
 use color::{Color, Gameover};
 use gamestate::GameState;
-
-const MAX_DEPTH: u8 = 20; // Maximum depth for the negamax algorithm
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Gamemode {
@@ -17,18 +16,16 @@ enum Gamemode {
 }
 
 fn main() {
+    run_game();
+}
+
+fn run_game() -> Option<()> {
     println!("\n==========CONNECT FOUR==========");
-    // let mut board = GameState::from_fen("...r.../...y.../...r.../..yy.y./..yr.r./.yryrr.", Some(Color::Red));
-    let mut board = GameState::new();
+    println!("Enter 'q' at any time to quit the game.");
 
-    load_game(&mut board);
-
-    println!("Select game mode:");
-    println!("1. Human vs Human");
-    println!("2. Human vs Computer");
-    println!("3. Computer vs Computer");
-
-    let (mut gamemode, mut player_color) = determine_gamemode();
+    let mut board = load_game()?;
+    let (mut gamemode, mut player_color) = determine_gamemode()?;
+    override_starting_color(&mut board)?;
 
     println!("\nStarting game in {:?} mode", gamemode);
     println!("Initial board state:");
@@ -47,7 +44,10 @@ fn main() {
                         // Switch to computer mode
                         player_color = board.current_player().opposite();
                         gamemode = Gamemode::PlayerVsComputer;
-                        println!("Switching to Human vs Computer mode. Computer will play as {}.", player_color.opposite());
+                        println!(
+                            "Switching to Human vs Computer mode. Computer will play as {}.",
+                            player_color.opposite()
+                        );
                     }
                 }
             }
@@ -80,76 +80,119 @@ fn main() {
 
     println!("Final board state:");
     println!("{}", board.to_fen());
+    return None;
 }
 
-fn load_game(board: &mut GameState) {
+fn load_game() -> Option<GameState> {
     println!("Would you like to load a game from FEN? (y/n)");
+    let input = read_input()?;
+
+    if input == "y" {
+        println!("Enter FEN string:");
+        let input = read_input()?;
+        let board = GameState::from_fen(input.as_str(), None);
+        println!("Loaded game state from FEN:");
+        println!("{:?}", board);
+        Some(board)
+    } else if input == "q" {
+        return None;
+    } else {
+        println!("Starting a new game.");
+        Some(GameState::new())
+    }
+}
+
+fn override_starting_color(board: &mut GameState) -> Option<()> {
+    println!(
+        "Would you like {} or {} to play first? (y/r)",
+        Color::Yellow,
+        Color::Red
+    );
+    let input = read_input()?;
+    if input == "y" {
+        board.override_current_player(Color::Yellow);
+    } else {
+        board.override_current_player(Color::Red);
+    }
+    println!(
+        "Starting with {} as the first player.",
+        board.current_player()
+    );
+    Some(())
+}
+
+fn read_input() -> Option<String> {
     let mut input = String::new();
     std::io::stdin()
         .read_line(&mut input)
         .expect("Failed to read input");
     let input = input.trim().to_lowercase();
-    if input == "y" {
-        println!("Enter FEN string:");
-        let mut fen_input = String::new();
-        std::io::stdin()
-            .read_line(&mut fen_input)
-            .expect("Failed to read input");
-        *board = GameState::from_fen(fen_input.trim(), None);
-        println!("Loaded game state from FEN:");
-        println!("{:?}", board);
-    } else {
-        println!("Starting a new game.");
+    if input == "q" {
+        println!("Exiting game.");
+        return None;
     }
+    Some(input)
 }
 
 fn make_computer_turn(board: &mut GameState) {
     println!("\nComputer's turn");
-    let (column, eval) = engine::negamax_entrypoint(&*board, MAX_DEPTH);
+    let (column, eval) = engine::negamax_entrypoint(&*board);
     if board.make_move(column as u8) {
-        println!("{} plays column {} with eval of {}", board.current_player().opposite(), column, eval);
+        println!(
+            "{} plays column {} with eval of {}",
+            board.current_player().opposite(),
+            column + 1, // Convert to 1-indexed for display
+            eval
+        );
         println!("\n{:?}", board);
     } else {
-        println!("Column {} is full!", column);
+        panic!("Computer tried to play in a full column: {}", column + 1);
     }
 }
 
+/// If all goes well, returns a ControlFlow::Continue(false) to switch to playing against the bot.
+/// If the user wants to quit, returns ControlFlow::Break(()).
+/// If the user wants to switch to playing against the bot, returns ControlFlow::Continue(true).
 fn make_player_turn(board: &mut GameState) -> ControlFlow<(), bool> {
-    let mut input = String::new();
     println!("\n{}'s turn", board.current_player());
-    println!("Enter column number (0-6) or 'q' to quit or 's' to switch to playing a bot:");
-    std::io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read input");
-    let input = input.trim();
-    if input == "q" {
-        return ControlFlow::Break(());
-    }
+    println!("Enter column number (1-7) or 'q' to quit or 's' to switch to playing against bot:");
+    let input = match read_input() {
+        Some(input) => input,
+        None => return ControlFlow::Break(()), // User wants to quit
+    };
     if input == "s" {
         return ControlFlow::Continue(true);
     }
 
+    // User inputs 1-indexed column
     match input.parse::<u8>() {
-        Ok(column) if column < 7 => {
-            if board.make_move(column) {
+        Ok(column) if column < 8 && column > 0 => {
+            if board.make_move(column - 1) {
                 println!("\n{:?}", board);
             } else {
                 println!("Column {} is full!", column);
             }
         }
-        _ => println!("Please enter a valid column number (0-6)"),
+        _ => println!("Please enter a valid column number (1-7)"),
     }
     ControlFlow::Continue(false)
 }
 
-fn determine_gamemode() -> (Gamemode, Color) {
-    let gamemode = loop {
-        let mut gamemode = String::new();
-        std::io::stdin()
-            .read_line(&mut gamemode)
-            .expect("Failed to read input");
+fn determine_gamemode() -> Option<(Gamemode, Color)> {
+    println!("Select game mode:");
+    println!("1. Human vs Human");
+    println!("2. Human vs Computer");
+    println!("3. Computer vs Computer");
 
-        match gamemode.trim().parse() {
+    let gamemode = loop {
+        let input = read_input()?;
+
+        if input.is_empty() {
+            println!("Defaulting to Human vs Computer.");
+            break Gamemode::PlayerVsComputer
+        }
+
+        match input.parse() {
             Ok(1) => break Gamemode::PlayerVsPlayer,
             Ok(2) => break Gamemode::PlayerVsComputer,
             Ok(3) => break Gamemode::ComputerVsComputer,
@@ -162,22 +205,19 @@ fn determine_gamemode() -> (Gamemode, Color) {
 
     let player_color = if gamemode == Gamemode::PlayerVsComputer {
         // get user input for player color
-        println!("Do you want to play as Yellow (Y) or Red (R)?");
-        let mut color_input = String::new();
-        std::io::stdin()
-            .read_line(&mut color_input)
-            .expect("Failed to read input");
-        match color_input.trim().to_lowercase().as_str() {
+        println!("Do you want to play as {} or {} (y/r)?", Color::Yellow, Color::Red);
+        let input = read_input()?;
+        match input.as_str() {
             "y" | "yellow" => Color::Yellow,
             "r" | "red" => Color::Red,
             _ => {
-                println!("Invalid input, defaulting to Yellow");
-                Color::Yellow
+                println!("Defaulting to {}", Color::Red);
+                Color::Red
             }
         }
     } else {
         Color::Yellow // Default color for Player vs Player and Computer vs Computer, doesn't matter
     };
 
-    (gamemode, player_color)
+    Some((gamemode, player_color))
 }
