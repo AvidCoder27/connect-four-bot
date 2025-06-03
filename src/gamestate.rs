@@ -21,8 +21,7 @@ impl GameState {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn from_str(s: &str, color: Option<Color>) -> Self {
+    pub fn from_fen(s: &str, color: Option<Color>) -> Self {
         let mut game = GameState::new();
         let mut row = 5; // Start from top row
         let mut col = 0;
@@ -62,6 +61,29 @@ impl GameState {
         }
 
         game
+    }
+
+    pub fn to_fen(&self) -> String {
+        let mut result = String::new();
+        for row in (0..6).rev() {
+            for col in 0..7 {
+                let bit_index = col * 7 + row;
+                let mask = 1u64 << bit_index;
+                result.push(
+                    if self.red & mask != 0 {
+                        'r'
+                    } else if self.yellow & mask != 0 {
+                        'y'
+                    } else {
+                        '.'
+                    }
+                );
+            }
+            if row > 0 {
+                result.push('/');
+            }
+        }
+        result
     }
 
     pub fn gameover_state(&self) -> Gameover {
@@ -211,7 +233,7 @@ mod tests {
 
     #[test]
     fn test_tie_full_board_no_winner() {
-        let game = GameState::from_str("yrryyry/ryrrryr/rryyyrr/yyyrryy/rryyyry/yyrrryr", None);
+        let game = GameState::from_fen("yrryyry/ryrrryr/rryyyrr/yyyrryy/rryyyry/yyrrryr", None);
         println!("{:?}", game);
         assert_eq!(game.gameover_state(), Gameover::Tie);
     }

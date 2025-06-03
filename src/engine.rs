@@ -2,8 +2,8 @@ use crate::color::Gameover;
 use crate::gamestate::GameState;
 use rayon::prelude::*;
 
-pub fn negamax_entrypoint(board: &GameState, depth: u8) -> u8 {
-    let (best_move, _) = (0..7)
+pub fn negamax_entrypoint(board: &GameState, depth: u8) -> (u8, i32) {
+    let outcome = (0..7)
         .into_par_iter()
         .filter(|&column| board.get_height(column) < 6)
         .map(|column| {
@@ -13,7 +13,7 @@ pub fn negamax_entrypoint(board: &GameState, depth: u8) -> u8 {
             (column, eval)
         })
         .reduce(|| (8, i32::MIN), |a, b| if b.1 > a.1 { b } else { a });
-    best_move
+    outcome
 }
 
 fn negamax(board: &GameState, depth: u8, mut alpha: i32, beta: i32) -> i32 {
