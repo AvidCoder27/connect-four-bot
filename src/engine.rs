@@ -1,21 +1,18 @@
 use crate::color::Gameover;
 use crate::gamestate::GameState;
+use rayon::prelude::*;
 
 pub fn negamax_entrypoint(board: &GameState, depth: u8) -> u8 {
-    // Start the negamax algorithm with alpha and beta values
-    let mut best_move = 8; // Initialize with an invalid move
-    let mut best_eval = i32::MIN;
-
-    for column in 0..7 {
-        if board.get_height(column) < 6 {
-            let eval = negamax(board, depth, i32::MIN + 1, i32::MAX);
-            if eval > best_eval {
-                best_eval = eval;
-                best_move = column
-            }
-        }
-    }
-
+    let (best_move, _) = (0..7)
+        .into_par_iter()
+        .filter(|&column| board.get_height(column) < 6)
+        .map(|column| {
+            let mut new_board = board.clone();
+            new_board.make_move(column);
+            let eval = negamax(&new_board, depth, i32::MIN + 1, i32::MAX);
+            (column, eval)
+        })
+        .reduce(|| (8, i32::MIN), |a, b| if b.1 > a.1 { b } else { a });
     best_move
 }
 
@@ -39,13 +36,13 @@ fn negamax(board: &GameState, depth: u8, mut alpha: i32, beta: i32) -> i32 {
         return evaluate(board);
     }
 
-    let mut max_eval = i32::MIN;
+    let mut max_eval = i32::MIN + 1;
 
     for column in 0..7 {
         if board.get_height(column) < 6 {
             let mut new_board = board.clone();
             new_board.make_move(column);
-            let eval = -negamax(&mut new_board, depth - 1, -beta, -alpha);
+            let eval = -negamax(&new_board, depth - 1, -beta, -alpha);
 
             max_eval = max_eval.max(eval);
             if max_eval >= beta {
@@ -60,8 +57,31 @@ fn negamax(board: &GameState, depth: u8, mut alpha: i32, beta: i32) -> i32 {
     max_eval
 }
 
-fn evaluate(board: &GameState) -> i32 {
+fn evaluate(_board: &GameState) -> i32 {
     // For now, a simple evaluation function that returns 0
     // This should be replaced with a more sophisticated evaluation function
     0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_red_wins() {
+        let mut game = GameState::from_str("..ryyry/..rrryr/rryyyrr/yyyrryy/rryyyry/yyrrryr", None);
+        println!("{:?}", game);
+
+        //yellow to play, should block
+        let m = negamax_entrypoint(&game, 5);
+        game.make_move(m);
+        println!("{:?}", game);
+        
+        // red to play, wins if yellow is stupid
+        let m = negamax_entrypoint(&game, 5);
+        game.make_move(m);
+        println!("{:?}", game);
+        
+        assert_eq!(m, 1);
+    }
 }

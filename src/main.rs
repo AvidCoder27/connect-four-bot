@@ -7,7 +7,7 @@ use std::ops::ControlFlow;
 use color::{Color, Gameover};
 use gamestate::GameState;
 
-const MAX_DEPTH: u8 = 5; // Maximum depth for the negamax algorithm
+const MAX_DEPTH: u8 = 30; // Maximum depth for the negamax algorithm
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Gamemode {
@@ -18,7 +18,8 @@ enum Gamemode {
 
 fn main() {
     println!("\n==========CONNECT FOUR==========");
-    let mut board = GameState::new();
+    let mut board = GameState::from_str("......./..r..../..yy.../..yr.../.rryy../.ryry..", Some(Color::Red));
+    // let mut board = GameState::new();
 
     println!("Select game mode:");
     println!("1. Human vs Human");
@@ -28,7 +29,6 @@ fn main() {
     let (gamemode, player_color) = determine_gamemode();
 
     println!("\nStarting game in {:?} mode", gamemode);
-    println!("{:?}", board);
 
     loop {
         match gamemode {
@@ -43,31 +43,36 @@ fn main() {
                         break;
                     }
                 } else {
-                    // Computer's turn
-                    println!("\nComputer's turn");
-                    let column = engine::negamax_entrypoint(&board, MAX_DEPTH);
-                    if board.make_move(column as u8) {
-                        println!("\n{:?}", board);
-                    } else {
-                        println!("Column {} is full!", column);
-                    }
+                    make_computer_turn(&mut board);
                 }
             }
             Gamemode::ComputerVsComputer => {
-                // Computer vs Computer logic
-                println!("{:?}", board);
-                let column = engine::negamax_entrypoint(&board, MAX_DEPTH);
-                if board.make_move(column as u8) {
-                    println!("\n{:?}", board);
-                } else {
-                    panic!("Computer tried to play in a full column!");
-                }
+                make_computer_turn(&mut board);
             }
         }
 
-        if board.gameover_state() != Gameover::None {
-            break;
+        match board.gameover_state() {
+            Gameover::Win(color) => {
+                println!("\nGame Over! {} wins!", color);
+                break;
+            }
+            Gameover::Tie => {
+                println!("\nGame Over! It's a tie!");
+                break;
+            }
+            Gameover::None => {}
         }
+    }
+}
+
+fn make_computer_turn(board: &mut GameState) {
+    println!("\nComputer's turn");
+    let column = engine::negamax_entrypoint(&*board, MAX_DEPTH);
+    if board.make_move(column as u8) {
+        println!("{} plays column {}", board.current_player().opposite(), column);
+        println!("\n{:?}", board);
+    } else {
+        println!("Column {} is full!", column);
     }
 }
 

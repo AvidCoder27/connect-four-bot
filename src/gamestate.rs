@@ -2,7 +2,7 @@ use crate::color::{Color, Gameover};
 use colored::*;
 use std::fmt;
 
-const FULL_BOARD_MASK: u64 = 0x7BDEF7BDEF7BDEF;
+const FULL_BOARD_MASK: u64 = 0b_0111111_0111111_0111111_0111111_0111111_0111111_0111111; // 7 bits per column, MSB is sentinel
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct GameState {
@@ -21,13 +21,79 @@ impl GameState {
         }
     }
 
+    #[allow(dead_code)]
+    pub fn from_str(s: &str, color: Option<Color>) -> Self {
+        let mut game = GameState::new();
+        let mut row = 5; // Start from top row
+        let mut col = 0;
+
+        for c in s.chars() {
+            match c {
+                'r' => {
+                    let bit_index = col * 7 + row;
+                    game.red |= 1u64 << bit_index;
+                    col += 1;
+                }
+                'y' => {
+                    let bit_index = col * 7 + row;
+                    game.yellow |= 1u64 << bit_index;
+                    col += 1;
+                }
+                '.' => col += 1,
+                '/' => {
+                    row -= 1;
+                    col = 0;
+                }
+                _ => continue,
+            }
+        }
+
+        // Count pieces to determine current player
+        let red_count = game.red.count_ones();
+        let yellow_count = game.yellow.count_ones();
+        if let Some(c) = color {
+            game.current_player = c;
+        } else {
+            game.current_player = if red_count == yellow_count {
+                Color::Yellow
+            } else {
+                Color::Red
+            };
+        }
+
+        game
+    }
+
     pub fn gameover_state(&self) -> Gameover {
-        let board_full = !self.filled() & FULL_BOARD_MASK == 0;
+        if Self::has_won(self.red) {
+            return Gameover::Win(Color::Red);
+        }
+        if Self::has_won(self.yellow) {
+            return Gameover::Win(Color::Yellow);
+        }
+
+        let board_full = (self.filled() & FULL_BOARD_MASK) == FULL_BOARD_MASK;
         if board_full {
             Gameover::Tie
         } else {
             Gameover::None
         }
+    }
+
+    /// Bitboard win detection for a single player's board.
+    fn has_won(board: u64) -> bool {
+        // Directions: right (1), down (7), down-right (6), down-left (8)
+        const DIRECTIONS: [u32; 4] = [1, 7, 6, 8];
+
+        for &dir in &DIRECTIONS {
+            let m1 = board & (board >> dir);
+            let m2 = m1 & (m1 >> (dir * 2));
+            if m2 != 0 {
+                return true;
+            }
+        }
+
+        false
     }
 
     /// Make a move in the specified column.
@@ -104,7 +170,59 @@ impl fmt::Debug for GameState {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::{
+        color::Color,
+        gamestate::{GameState, Gameover},
+    };
+
+    #[test]
+    fn test_game_not_over_empty_board() {
+        let game = GameState::new();
+        assert_eq!(game.gameover_state(), Gameover::None);
+    }
+
+    #[test]
+    fn test_red_wins_vertically() {
+        let mut game = GameState::new();
+        game.red = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3); // vertical win
+        assert_eq!(game.gameover_state(), Gameover::Win(Color::Red));
+    }
+
+    #[test]
+    fn test_yellow_wins_horizontally() {
+        let mut game = GameState::new();
+        game.yellow = (1 << 0) | (1 << 7) | (1 << 14) | (1 << 21); // horizontal win
+        assert_eq!(game.gameover_state(), Gameover::Win(Color::Yellow));
+    }
+
+    #[test]
+    fn test_red_wins_diagonal_up_right() {
+        let mut game = GameState::new();
+        game.red = (1 << 0) | (1 << 8) | (1 << 16) | (1 << 24); // up-right diagonal
+        assert_eq!(game.gameover_state(), Gameover::Win(Color::Red));
+    }
+
+    #[test]
+    fn test_yellow_wins_diagonal_up_left() {
+        let mut game = GameState::new();
+        game.yellow = (1 << 21) | (1 << 15) | (1 << 9) | (1 << 3); // up-left diagonal
+        assert_eq!(game.gameover_state(), Gameover::Win(Color::Yellow));
+    }
+
+    #[test]
+    fn test_tie_full_board_no_winner() {
+        let game = GameState::from_str("yrryyry/ryrrryr/rryyyrr/yyyrryy/rryyyry/yyrrryr", None);
+        println!("{:?}", game);
+        assert_eq!(game.gameover_state(), Gameover::Tie);
+    }
+
+    #[test]
+    fn test_game_in_progress_partial_board() {
+        let mut game = GameState::new();
+        game.red = (1 << 0) | (1 << 7); // two red moves
+        game.yellow = 1 << 1; // one yellow move
+        assert_eq!(game.gameover_state(), Gameover::None);
+    }
 
     fn game_with_column(column: u8, pieces: u8) -> GameState {
         let mut game = GameState::new();
