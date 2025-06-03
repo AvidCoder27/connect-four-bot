@@ -135,7 +135,7 @@ fn read_input() -> Option<String> {
 }
 
 fn make_computer_turn(board: &mut GameState) {
-    println!("\nComputer's turn");
+    println!("\n{} Computer turn", board.current_player());
     let (column, eval) = engine::negamax_entrypoint(&*board);
     if board.make_move(column as u8) {
         println!(
@@ -189,7 +189,7 @@ fn determine_gamemode() -> Option<(Gamemode, Color)> {
 
         if input.is_empty() {
             println!("Defaulting to Human vs Computer.");
-            break Gamemode::PlayerVsComputer
+            break Gamemode::PlayerVsComputer;
         }
 
         match input.parse() {
@@ -205,7 +205,11 @@ fn determine_gamemode() -> Option<(Gamemode, Color)> {
 
     let player_color = if gamemode == Gamemode::PlayerVsComputer {
         // get user input for player color
-        println!("Do you want to play as {} or {} (y/r)?", Color::Yellow, Color::Red);
+        println!(
+            "Do you want to play as {} or {} (y/r)?",
+            Color::Yellow,
+            Color::Red
+        );
         let input = read_input()?;
         match input.as_str() {
             "y" | "yellow" => Color::Yellow,

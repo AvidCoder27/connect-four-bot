@@ -89,15 +89,29 @@ impl GameState {
     }
 
     pub fn gameover_state(&self) -> Gameover {
-        if Self::has_won(self.red) {
-            return Gameover::Win(Color::Red);
-        }
-        if Self::has_won(self.yellow) {
-            return Gameover::Win(Color::Yellow);
+        let piece_count = (self.filled() & FULL_BOARD_MASK).count_ones();
+        // Only check for gameover if there are at least 7 pieces on the board
+        // This is assuming normal gameplay where players alternate turns
+        // With only 6 pieces, no player can win
+        if piece_count < 7 {
+            return Gameover::None;
         }
 
-        let board_full = (self.filled() & FULL_BOARD_MASK) == FULL_BOARD_MASK;
-        if board_full {
+        // The only valid gameover state is if the non-current player has won
+        match self.current_player {
+            Color::Yellow => {
+                if Self::has_won(self.red) {
+                    return Gameover::Win(Color::Red);
+                }
+            }
+            Color::Red => {
+                if Self::has_won(self.yellow) {
+                    return Gameover::Win(Color::Yellow);
+                }
+            }
+        }
+
+        if piece_count == 42{ // 6 rows * 7 columns = 42 total pieces {
             Gameover::Tie
         } else {
             Gameover::None
