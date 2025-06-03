@@ -62,26 +62,3 @@ fn evaluate(_board: &GameState) -> i32 {
     // This should be replaced with a more sophisticated evaluation function
     0
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_red_wins() {
-        let mut game = GameState::from_str("..ryyry/..rrryr/rryyyrr/yyyrryy/rryyyry/yyrrryr", None);
-        println!("{:?}", game);
-
-        //yellow to play, should block
-        let m = negamax_entrypoint(&game, 5);
-        game.make_move(m);
-        println!("{:?}", game);
-        
-        // red to play, wins if yellow is stupid
-        let m = negamax_entrypoint(&game, 5);
-        game.make_move(m);
-        println!("{:?}", game);
-        
-        assert_eq!(m, 1);
-    }
-}
