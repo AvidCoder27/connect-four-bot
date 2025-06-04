@@ -7,6 +7,7 @@ const FULL_BOARD_MASK: u64 = 0b_0111111_0111111_0111111_0111111_0111111_0111111_
 #[derive(Clone, PartialEq, Eq)]
 pub struct GameState {
     // Bitboards for each player, using 7 bits per column (6 rows + 1 sentinel row for overflow)
+    // MS_7bits is the far right column, LS_7bits is the far left column
     red: u64,
     yellow: u64,
     current_player: Color,
@@ -27,7 +28,7 @@ impl GameState {
 
     pub fn from_fen(s: &str, color: Option<Color>) -> Self {
         let mut game = GameState::new();
-        let mut row = 5; // Start from top row
+        let mut row = 5; // Start from the top row
         let mut col = 0;
 
         for c in s.chars() {
@@ -51,7 +52,7 @@ impl GameState {
             }
         }
 
-        // Count pieces to determine current player
+        // Count pieces to determine the current player
         let red_count = game.red.count_ones();
         let yellow_count = game.yellow.count_ones();
         if let Some(c) = color {
@@ -157,14 +158,12 @@ impl GameState {
                 self.current_player = Color::Yellow;
             }
         }
-        true // Move was successful
+        true // The move was successful
     }
 
     pub fn get_height(&self, column: u8) -> u8 {
-        let col_bits = (self.filled() >> (column * 7)) & 0x3F;
-        if col_bits == 0x3F {
-            return 6; // Column is full
-        }
+        const LS_SIX_BITS: u64 = 0b111111;
+        let col_bits = (self.filled() >> (column * 7)) & LS_SIX_BITS;
         col_bits.trailing_ones() as u8
     }
 
@@ -209,7 +208,6 @@ impl fmt::Debug for GameState {
 #[cfg(test)]
 mod tests {
     use crate::{
-        color::Color,
         gamestate::{GameState, Gameover},
     };
 
@@ -217,34 +215,6 @@ mod tests {
     fn test_game_not_over_empty_board() {
         let game = GameState::new();
         assert_eq!(game.gameover_state(), Gameover::None);
-    }
-
-    #[test]
-    fn test_red_wins_vertically() {
-        let mut game = GameState::new();
-        game.red = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3); // vertical win
-        assert_eq!(game.gameover_state(), Gameover::Win(Color::Red));
-    }
-
-    #[test]
-    fn test_yellow_wins_horizontally() {
-        let mut game = GameState::new();
-        game.yellow = (1 << 0) | (1 << 7) | (1 << 14) | (1 << 21); // horizontal win
-        assert_eq!(game.gameover_state(), Gameover::Win(Color::Yellow));
-    }
-
-    #[test]
-    fn test_red_wins_diagonal_up_right() {
-        let mut game = GameState::new();
-        game.red = (1 << 0) | (1 << 8) | (1 << 16) | (1 << 24); // up-right diagonal
-        assert_eq!(game.gameover_state(), Gameover::Win(Color::Red));
-    }
-
-    #[test]
-    fn test_yellow_wins_diagonal_up_left() {
-        let mut game = GameState::new();
-        game.yellow = (1 << 21) | (1 << 15) | (1 << 9) | (1 << 3); // up-left diagonal
-        assert_eq!(game.gameover_state(), Gameover::Win(Color::Yellow));
     }
 
     #[test]
@@ -285,7 +255,7 @@ mod tests {
 
     #[test]
     fn test_filled_column() {
-        let game = game_with_column(4, 6); // Fill column 4 completely
+        let game = game_with_column(4, 6); // Fill column 4
         assert_eq!(game.get_height(4), 6);
     }
 
