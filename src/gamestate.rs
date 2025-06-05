@@ -160,6 +160,22 @@ impl GameState {
         }
         true // The move was successful
     }
+    
+    /// Undo a move made at a specific column
+    pub fn undo_move(&mut self, column: u8) {
+        let bit_index = column * 7 + self.get_height(column) - 1;
+        let mask = 1u64 << bit_index;
+        match self.current_player {
+            Color::Yellow => {
+                self.red &= !mask;
+                self.current_player = Color::Red;
+            }
+            Color::Red => {
+                self.yellow &= !mask;
+                self.current_player = Color::Yellow;
+            }
+        }
+    }
 
     pub fn get_height(&self, column: u8) -> u8 {
         const LS_SIX_BITS: u64 = 0b111111;

@@ -16,7 +16,7 @@ pub fn negamax_entrypoint(board: &GameState) -> (u8, i32) {
             // Evaluate each possible move
             let mut new_board = board.clone();
             new_board.make_move(column);
-            let eval = -negamax(&new_board, -10_000, 10_000, 0);
+            let eval = -negamax(&mut new_board, -10_000, 10_000, 0);
             println!("Column {} evaluated to {}", column + 1, eval);
             (column, eval)
         })
@@ -32,7 +32,7 @@ pub fn negamax_entrypoint(board: &GameState) -> (u8, i32) {
     *results.first().expect("Must have at least one valid move")
 }
 
-fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u16) -> i32 {
+fn negamax(board: &mut GameState, mut alpha: i32, beta: i32, ply: u16) -> i32 {
     // Base case: game is over
     match board.gameover_state() {
         Gameover::Win(color) => {
@@ -55,9 +55,9 @@ fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u16) -> i32 {
     let mut max_eval = -20_000;
     for column in COLUMN_ORDERING {
         if board.get_height(column) < 6 {
-            let mut new_board = board.clone();
-            new_board.make_move(column);
-            let eval = -negamax(&new_board, -beta, -alpha, ply + 1);
+            board.make_move(column);
+            let eval = -negamax(board, -beta, -alpha, ply + 1);
+            board.undo_move(column);
             max_eval = max_eval.max(eval);
 
             alpha = alpha.max(max_eval);
