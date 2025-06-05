@@ -22,7 +22,7 @@ pub fn negamax_entrypoint(board: &GameState) -> (u8, i32) {
         })
         .collect();
 
-    results.sort_by_key(|result| result.0);
+    results.sort_by_key(|result| result.1);
 
     println!();
     for (col, eval) in results.iter() {
@@ -37,15 +37,19 @@ fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u32) -> i32 {
     match board.gameover_state() {
         Gameover::Win(color) => {
             // If the game has ended, then the next person to play has lost
-            debug_assert_ne!(color, board.current_player(), "Gameover state should not be Win for current player");
-            return  WINNING_EVAL;
+            debug_assert_ne!(
+                color,
+                board.current_player(),
+                "Gameover state should not be Win for current player"
+            );
+            return WINNING_EVAL;
         }
         Gameover::Tie => return 0,
         Gameover::None => {}
     }
 
     if ply >= MAX_PLY {
-        return 0
+        return 0;
     }
 
     let mut max_eval = i32::MIN + 1;

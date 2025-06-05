@@ -112,7 +112,8 @@ impl GameState {
             }
         }
 
-        if piece_count == 42{ // 6 rows * 7 columns = 42 total pieces {
+        // 6 rows * 7 columns = 42 total pieces
+        if piece_count == 42 {
             Gameover::Tie
         } else {
             Gameover::None
@@ -122,9 +123,8 @@ impl GameState {
     /// Bitboard win detection for a single player's board.
     fn has_won(board: u64) -> bool {
         // Directions: right (1), down (7), down-right (6), down-left (8)
-        const DIRECTIONS: [u32; 4] = [1, 7, 6, 8];
-
-        for &dir in &DIRECTIONS {
+        const DIRECTIONS: [u8; 4] = [1, 7, 6, 8];
+        for dir in DIRECTIONS {
             let m1 = board & (board >> dir);
             let m2 = m1 & (m1 >> (dir * 2));
             if m2 != 0 {
@@ -207,9 +207,7 @@ impl fmt::Debug for GameState {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        gamestate::{GameState, Gameover},
-    };
+    use crate::gamestate::{GameState, Gameover};
 
     #[test]
     fn test_game_not_over_empty_board() {
