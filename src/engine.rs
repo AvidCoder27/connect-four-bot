@@ -5,7 +5,7 @@ use rayon::prelude::*;
 // Prioritize columns near the center
 const COLUMN_ORDERING: [u8; 7] = [3, 2, 4, 1, 5, 0, 6];
 const WINNING_EVAL: i32 = 1000; // Value for a winning move
-const MAX_PLY: u32 = 50;
+const MAX_PLY: u16 = 50;
 
 pub fn negamax_entrypoint(board: &GameState) -> (u8, i32) {
     let mut results: Vec<(u8, i32)> = COLUMN_ORDERING
@@ -16,23 +16,23 @@ pub fn negamax_entrypoint(board: &GameState) -> (u8, i32) {
             // Evaluate each possible move
             let mut new_board = board.clone();
             new_board.make_move(column);
-            let eval = negamax(&new_board, i32::MIN + 1, i32::MAX, 0);
+            let eval = negamax(&new_board, -10_000, 10_000, 0);
             println!("Column {} evaluated to {}", column + 1, eval);
             (column, eval)
         })
         .collect();
 
-    results.sort_by_key(|result| result.1);
+    results.sort_by_key(|result| -result.1);
 
     println!();
     for (col, eval) in results.iter() {
         println!("Column {} evaluated to {}", col + 1, eval);
     }
 
-    *results.last().expect("Must have at least one valid move")
+    *results.first().expect("Must have at least one valid move")
 }
 
-fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u32) -> i32 {
+fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u16) -> i32 {
     // Base case: game is over
     match board.gameover_state() {
         Gameover::Win(color) => {
@@ -42,7 +42,7 @@ fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u32) -> i32 {
                 board.current_player(),
                 "Gameover state should not be Win for current player"
             );
-            return WINNING_EVAL;
+            return WINNING_EVAL - ply as i32;
         }
         Gameover::Tie => return 0,
         Gameover::None => {}
@@ -61,17 +61,10 @@ fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u32) -> i32 {
 
             alpha = alpha.max(max_eval);
             if alpha >= beta {
-                break;
+                // break;
             }
         }
     }
 
-    // Degrade the eval by 1 to prefer faster wins/slower losses
-    if max_eval > 0 {
-        max_eval - 1
-    } else if max_eval < 0 {
-        max_eval + 1
-    } else {
-        max_eval
-    }
+    max_eval
 }

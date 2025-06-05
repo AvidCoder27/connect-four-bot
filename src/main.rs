@@ -1,6 +1,7 @@
 pub mod color;
 mod engine;
 mod gamestate;
+mod transposition;
 
 use core::panic;
 use std::ops::ControlFlow;

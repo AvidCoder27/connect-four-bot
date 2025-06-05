@@ -1,3 +1,5 @@
+use crate::gamestate::GameState;
+
 struct TranspositionEntry {
     pub gamestate: GameState,
     pub best_move: u8,
