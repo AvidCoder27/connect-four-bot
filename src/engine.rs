@@ -52,7 +52,7 @@ fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u16) -> i32 {
         return 0;
     }
 
-    let mut max_eval = i32::MIN + 1;
+    let mut max_eval = -20_000;
     for column in COLUMN_ORDERING {
         if board.get_height(column) < 6 {
             let mut new_board = board.clone();
@@ -61,7 +61,7 @@ fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u16) -> i32 {
 
             alpha = alpha.max(max_eval);
             if alpha >= beta {
-                // break;
+                break;
             }
         }
     }
