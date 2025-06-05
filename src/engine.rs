@@ -53,28 +53,25 @@ fn negamax(board: &GameState, mut alpha: i32, beta: i32, ply: u32) -> i32 {
     }
 
     let mut max_eval = i32::MIN + 1;
-
     for column in COLUMN_ORDERING {
         if board.get_height(column) < 6 {
             let mut new_board = board.clone();
             new_board.make_move(column);
-            let eval = -negamax(&new_board, -beta, -alpha, ply + 1);
+            max_eval = max_eval.max(-negamax(&new_board, -beta, -alpha, ply + 1));
 
-            max_eval = max_eval.max(eval);
-            if max_eval >= beta {
-                break; // Beta cut-off
-            }
-            if max_eval > alpha {
-                alpha = max_eval; // Update alpha
+            alpha = alpha.max(max_eval);
+            if alpha >= beta {
+                break;
             }
         }
     }
 
     // Degrade the eval by 1 to prefer faster wins/slower losses
     if max_eval > 0 {
-        max_eval -= 1
+        max_eval - 1
     } else if max_eval < 0 {
-        max_eval += 1
-    };
-    max_eval
+        max_eval + 1
+    } else {
+        max_eval
+    }
 }
