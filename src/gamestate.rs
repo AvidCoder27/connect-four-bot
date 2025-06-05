@@ -4,7 +4,7 @@ use std::fmt;
 
 const FULL_BOARD_MASK: u64 = 0b_0111111_0111111_0111111_0111111_0111111_0111111_0111111; // 7 bits per column, MSB is sentinel
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct GameState {
     // Bitboards for each player, using 7 bits per column (6 rows + 1 sentinel row for overflow)
     // MS_7bits is the far right column, LS_7bits is the far left column
@@ -160,7 +160,7 @@ impl GameState {
         }
         true // The move was successful
     }
-    
+
     /// Undo a move made at a specific column
     pub fn undo_move(&mut self, column: u8) {
         let bit_index = column * 7 + self.get_height(column) - 1;

@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 
 use colored::*;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Color {
     Yellow,
     Red,
