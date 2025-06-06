@@ -137,7 +137,7 @@ fn read_input() -> Option<String> {
 
 fn make_computer_turn(board: &mut GameState) {
     println!("\n{} Computer turn", board.current_player());
-    let (column, eval) = engine::negamax_entrypoint(&*board);
+    let (column, eval) = engine::negamax_entrypoint(board, &mut transposition::new_table());
     if board.make_move(column as u8) {
         println!(
             "{} plays column {} with eval of {}",

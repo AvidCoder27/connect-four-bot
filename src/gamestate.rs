@@ -190,6 +190,14 @@ impl GameState {
     pub fn current_player(&self) -> Color {
         self.current_player
     }
+
+    pub fn get_red(&self) -> u64 {
+        self.red
+    }
+
+    pub fn get_yellow(&self) -> u64 {
+        self.yellow
+    }
 }
 
 impl fmt::Debug for GameState {
