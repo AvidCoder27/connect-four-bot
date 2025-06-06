@@ -17,7 +17,6 @@ pub fn negamax_entrypoint(board: &GameState, table: &mut transposition::Table) -
             let mut new_board = board.clone();
             new_board.make_move(column);
             let eval = -negamax(&mut new_board, -10_000, 10_000, 0, table);
-            println!("Column {} evaluated to {}", column + 1, eval);
             (column, eval)
         })
         .collect();
