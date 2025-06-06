@@ -24,6 +24,7 @@ fn run_game() -> Option<()> {
     println!("\n==========CONNECT FOUR==========");
     println!("Enter 'q' at any time to quit the game.");
 
+    let mut transposition_table = transposition::new_table();
     let mut board = load_game()?;
     let (mut gamemode, mut player_color) = determine_gamemode()?;
     override_starting_color(&mut board)?;
@@ -58,11 +59,11 @@ fn run_game() -> Option<()> {
                         break;
                     }
                 } else {
-                    make_computer_turn(&mut board);
+                    make_computer_turn(&mut board, &mut transposition_table);
                 }
             }
             Gamemode::ComputerVsComputer => {
-                make_computer_turn(&mut board);
+                make_computer_turn(&mut board, &mut transposition_table);
             }
         }
 
@@ -135,9 +136,9 @@ fn read_input() -> Option<String> {
     Some(input)
 }
 
-fn make_computer_turn(board: &mut GameState) {
+fn make_computer_turn(board: &mut GameState, transposition_table: &mut transposition::Table) {
     println!("\n{} Computer turn", board.current_player());
-    let (column, eval) = engine::negamax_entrypoint(board, &mut transposition::new_table());
+    let (column, eval) = engine::negamax_entrypoint(board, transposition_table);
     if board.make_move(column as u8) {
         println!(
             "{} plays column {} with eval of {}",
