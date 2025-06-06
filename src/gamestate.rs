@@ -2,6 +2,7 @@ use crate::color::{Color, Gameover};
 use colored::*;
 use std::fmt;
 
+const PIECE_ICON: &'static str = "●";
 const FULL_BOARD_MASK: u64 = 0b_0111111_0111111_0111111_0111111_0111111_0111111_0111111; // 7 bits per column, MSB is sentinel
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -202,7 +203,7 @@ impl GameState {
 
 impl fmt::Debug for GameState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{:?} to play", self.current_player)?;
+        writeln!(f, "{:} to play", self.current_player)?;
 
         for row in (0..6).rev() {
             // Print from top to bottom
@@ -214,9 +215,9 @@ impl fmt::Debug for GameState {
                     f,
                     " {} ",
                     if self.red & mask != 0 {
-                        "R".red()
+                        PIECE_ICON.red()
                     } else if self.yellow & mask != 0 {
-                        "Y".yellow()
+                        PIECE_ICON.yellow()
                     } else {
                         " ".white()
                     }
