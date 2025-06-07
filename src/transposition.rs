@@ -35,28 +35,33 @@ pub fn probe_eval(table: &Table, gamestate: &GameState) -> Option<i32> {
     Some(entry.eval)
 }
 
-/// A large vector of zobrist values. Two values for each square, the first for red and the second for yellow.
-static ZOBRIST_TABLE: LazyLock<Vec<(u64, u64)>> = LazyLock::new(|| {
+/// tuple.0 is a vector of (red, yellow) hashes for each square,
+/// tuple.1 is the hashes for current_player, (red, yellow).
+static ZOBRIST_TABLE: LazyLock<(Vec<(u64, u64)>, (u64, u64))> = LazyLock::new(|| {
     const BOARD_SIZE: usize = 49;
     let mut table = vec![(0u64, 0u64); BOARD_SIZE];
     let mut rng = Mt64::new_unseeded();
     for square in 0..BOARD_SIZE {
         table[square] = (rng.next_u64(), rng.next_u64());
     }
-    table
+    (table, (rng.next_u64(), rng.next_u64()))
 });
 
 fn compute_hash(game_state: &GameState) -> u64 {
     let mut hash = 0u64;
     hash = hash_bitboard(hash, game_state.get_yellow(), Color::Yellow);
     hash = hash_bitboard(hash, game_state.get_red(), Color::Red);
+    hash ^= match game_state.current_player() {
+        Color::Red => ZOBRIST_TABLE.1 .0,
+        Color::Yellow => ZOBRIST_TABLE.1 .1,
+    };
     hash
 }
 
 /// Hash a bitboard with a color, starting with the given hash and returning a new hash.
 fn hash_bitboard(mut hash: u64, mut bitboard: u64, color: Color) -> u64 {
     while bitboard > 0 {
-        let square = ZOBRIST_TABLE[bitboard.trailing_zeros() as usize];
+        let square = ZOBRIST_TABLE.0[bitboard.trailing_zeros() as usize];
         hash ^= match color {
             Color::Red => square.0,
             Color::Yellow => square.1,
