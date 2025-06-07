@@ -19,6 +19,7 @@ pub fn negamax_entrypoint(board: &GameState, table: &mut transposition::Table) -
             new_board.make_move(column);
             // We must check for terminal states because negamax does not check itself for termination.
             if let Some(eval) = evaluate_termination(&mut new_board, 0, table) {
+                println!("Column {} is a terminal move with eval {}", column + 1, eval);
                 (column, eval)
             } else {
                 let eval = -negamax(&mut new_board, -10_000, 10_000, 0, table);
@@ -99,10 +100,12 @@ fn negamax(
         board.undo_move(column);
         if let Some(eval) = eval {
             // We found a winning move, so we can return it immediately.
+            // We must negative the eval because the evaluate_termination() function works from the perspective of the current player,
+            // but we are checking down one level, so we need to negate the eval to get back to the correct perspective.
             // This could also be a tie, in which case we still return it.
             // This is because when a move causes a tie, it's because it's the last move (and doesn't cause a win)
             // A tie move is also necessarily the only possible move, so we can return it immediately.
-            return eval;
+            return -eval;
         }
     }
 
