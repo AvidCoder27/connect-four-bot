@@ -44,7 +44,7 @@ fn run_game() -> Option<()> {
                 if let ControlFlow::Continue(b) = ctrl {
                     if b {
                         // Switch to computer mode
-                        player_color = board.current_player().opposite();
+                        player_color = board.current_player.opposite();
                         gamemode = Gamemode::PlayerVsComputer;
                         println!(
                             "Switching to Human vs Computer mode. Computer will play as {}.",
@@ -54,7 +54,7 @@ fn run_game() -> Option<()> {
                 }
             }
             Gamemode::PlayerVsComputer => {
-                if board.current_player() == player_color {
+                if board.current_player == player_color {
                     if let ControlFlow::Break(_) = make_player_turn(&mut board) {
                         break;
                     }
@@ -118,7 +118,7 @@ fn override_starting_color(board: &mut GameState) -> Option<()> {
     }
     println!(
         "Starting with {} as the first player.",
-        board.current_player()
+        board.current_player
     );
     Some(())
 }
@@ -137,12 +137,12 @@ fn read_input() -> Option<String> {
 }
 
 fn make_computer_turn(board: &mut GameState, transposition_table: &mut transposition::Table) {
-    println!("\n{} Computer turn", board.current_player());
+    println!("\n{} Computer turn", board.current_player);
     let (column, eval) = engine::negamax_entrypoint(board, transposition_table);
     if board.make_move(column as u8) {
         println!(
             "{} plays column {} with eval of {}",
-            board.current_player().opposite(),
+            board.current_player.opposite(),
             column + 1, // Convert to 1-indexed for display
             eval
         );
@@ -156,7 +156,7 @@ fn make_computer_turn(board: &mut GameState, transposition_table: &mut transposi
 /// If the user wants to quit, returns ControlFlow::Break(()).
 /// If the user wants to switch to playing against the bot, returns ControlFlow::Continue(true).
 fn make_player_turn(board: &mut GameState) -> ControlFlow<(), bool> {
-    println!("\n{}'s turn", board.current_player());
+    println!("\n{}'s turn", board.current_player);
     println!("Enter column number (1-7) or 'q' to quit or 's' to switch to playing against bot:");
     let input = match read_input() {
         Some(input) => input,

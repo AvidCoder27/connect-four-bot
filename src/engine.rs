@@ -53,7 +53,7 @@ fn evaluate_termination(
             // If the game has ended, then the next person to play has lost
             debug_assert_ne!(
                 color,
-                board.current_player(),
+                board.current_player,
                 "Gameover state should not be Win for current player"
             );
             // The current player has lost, so we return a negative eval

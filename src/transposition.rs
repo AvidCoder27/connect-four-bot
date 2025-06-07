@@ -49,9 +49,9 @@ static ZOBRIST_TABLE: LazyLock<(Vec<(u64, u64)>, (u64, u64))> = LazyLock::new(||
 
 fn compute_hash(game_state: &GameState) -> u64 {
     let mut hash = 0u64;
-    hash = hash_bitboard(hash, game_state.get_yellow(), Color::Yellow);
-    hash = hash_bitboard(hash, game_state.get_red(), Color::Red);
-    hash ^= match game_state.current_player() {
+    hash = hash_bitboard(hash, game_state.yellow, Color::Yellow);
+    hash = hash_bitboard(hash, game_state.red, Color::Red);
+    hash ^= match game_state.current_player {
         Color::Red => ZOBRIST_TABLE.1 .0,
         Color::Yellow => ZOBRIST_TABLE.1 .1,
     };

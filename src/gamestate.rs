@@ -10,9 +10,9 @@ const FULL_BOARD_MASK: u64 = 0b_0111111_0111111_0111111_0111111_0111111_0111111_
 pub struct GameState {
     // Bitboards for each player, using 7 bits per column (6 rows + 1 sentinel row for overflow)
     // MS_7bits is the far right column, LS_7bits is the far left column
-    red: u64,
-    yellow: u64,
-    current_player: Color,
+    pub red: u64,
+    pub yellow: u64,
+    pub current_player: Color,
 }
 
 impl GameState {
@@ -24,6 +24,7 @@ impl GameState {
         }
     }
 
+    #[inline(always)]
     pub fn override_current_player(&mut self, color: Color) {
         self.current_player = color;
     }
@@ -122,6 +123,7 @@ impl GameState {
         }
     }
 
+    #[inline(always)]
     /// Bitboard win detection for a single player's board.
     fn has_won(board: u64) -> bool {
         // Directions: right (1), down (7), down-right (6), down-left (8)
@@ -179,26 +181,16 @@ impl GameState {
         }
     }
 
+    #[inline(always)]
     pub fn get_height(&self, column: u8) -> u8 {
         const LS_SIX_BITS: u64 = 0b111111;
         let col_bits = (self.filled() >> (column * 7)) & LS_SIX_BITS;
         col_bits.trailing_ones() as u8
     }
 
+    #[inline(always)]
     pub fn filled(&self) -> u64 {
         self.red | self.yellow
-    }
-
-    pub fn current_player(&self) -> Color {
-        self.current_player
-    }
-
-    pub fn get_red(&self) -> u64 {
-        self.red
-    }
-
-    pub fn get_yellow(&self) -> u64 {
-        self.yellow
     }
 }
 
