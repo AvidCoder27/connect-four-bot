@@ -19,6 +19,7 @@ pub fn negamax_entrypoint(board: &GameState, table: &mut transposition::Table) -
             new_board.make_move(column);
             // We must check for terminal states because negamax does not check itself for termination.
             if let Some(eval) = evaluate_termination(&mut new_board, 0, table) {
+                let eval = -eval;
                 println!("Column {} is a terminal move with eval {}", column + 1, eval);
                 (column, eval)
             } else {
