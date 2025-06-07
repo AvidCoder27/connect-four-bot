@@ -3,6 +3,7 @@ use colored::*;
 use std::fmt;
 
 const PIECE_ICON: &'static str = "●";
+const DEFAULT_STARTING_PLAYER: Color = Color::Red;
 const FULL_BOARD_MASK: u64 = 0b_0111111_0111111_0111111_0111111_0111111_0111111_0111111; // 7 bits per column, MSB is sentinel
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -60,9 +61,9 @@ impl GameState {
             game.current_player = c;
         } else {
             game.current_player = if red_count == yellow_count {
-                Color::Yellow
+                DEFAULT_STARTING_PLAYER
             } else {
-                Color::Red
+                DEFAULT_STARTING_PLAYER.opposite()
             };
         }
 
