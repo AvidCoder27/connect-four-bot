@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 colored = "3.0.0"
+modular-bitfield = "0.12.0"
 rand_mt = "5.0.0"
 rayon = "1.10.0"
 tinyvec = "1.9.0"
