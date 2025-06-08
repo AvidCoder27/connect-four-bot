@@ -20,7 +20,11 @@ pub fn negamax_entrypoint(board: &GameState, table: &mut transposition::Table) -
             // We must check for terminal states because negamax does not check itself for termination.
             if let Some(eval) = evaluate_termination(&mut new_board, 0, table) {
                 let eval = -eval;
-                println!("Column {} is a terminal move with eval {}", column + 1, eval);
+                println!(
+                    "Column {} is a terminal move with eval {}",
+                    column + 1,
+                    eval
+                );
                 (column, eval)
             } else {
                 let eval = -negamax(&mut new_board, -10_000, 10_000, 0, table);
@@ -52,8 +56,7 @@ fn evaluate_termination(
         Gameover::Win(color) => {
             // If the game has ended, then the next person to play has lost
             debug_assert_ne!(
-                color,
-                board.current_player,
+                color, board.current_player,
                 "Gameover state should not be Win for current player"
             );
             // The current player has lost, so we return a negative eval
@@ -63,7 +66,7 @@ fn evaluate_termination(
         Gameover::Tie => Some(0),
         Gameover::None => None,
     }?;
-    transposition::store_entry(table, board, eval, None);
+    transposition::store_entry(table, board, eval);
     Some(eval)
 }
 
@@ -124,7 +127,7 @@ fn negamax(
         }
     }
 
-    transposition::store_entry(table, board, max_eval, None);
+    transposition::store_entry(table, board, max_eval);
 
     max_eval
 }

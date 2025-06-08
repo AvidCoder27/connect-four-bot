@@ -4,28 +4,52 @@ use rand_mt::Mt64;
 use std::collections::HashMap;
 use std::sync::{LazyLock, RwLock};
 
+// Maximum size of the transposition table
+const MAX_TABLE_SIZE: usize = 80_000_000;
+const CLEAR_THRESHOLD: f32 = 0.9;
+const CLEAR_SIZE: usize = (MAX_TABLE_SIZE as f32 * CLEAR_THRESHOLD) as usize;
+
 pub type Table = RwLock<HashMap<u64, Entry>>;
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Entry {
-    hash: u64,
+    gamestate: GameState,
     eval: i32,
-    best_move: Option<u8>,
 }
 
 pub fn new_table() -> Table {
-    RwLock::new(HashMap::new())
+    RwLock::new(HashMap::with_capacity(MAX_TABLE_SIZE))
 }
 
-pub fn store_entry(table: &Table, gamestate: &GameState, eval: i32, best_move: Option<u8>) {
+pub fn store_entry(table: &Table, gamestate: &GameState, eval: i32) {
     let hash = compute_hash(gamestate);
-    let entry = Entry {
-        hash,
-        eval,
-        best_move,
-    };
     let mut table = table.write().expect("rw lock on tt to not be poisoned");
-    table.insert(entry.hash, entry);
+    let old_entry = table.get(&hash);
+    if let Some(old_entry) = old_entry {
+        if old_entry.eval == eval {
+            // If the existing entry has the same evaluation, we do not need to update it.
+            // This avoids unnecessary writes to the table.
+            return;
+        }
+    }
+
+    // If we reach here, no existing entry matched, so we create a new one.
+    let new_entry = Entry {
+        gamestate: gamestate.clone(),
+        eval,
+    };
+    table.insert(hash, new_entry);
+}
+
+pub fn check_for_table_clear(table: &Table) {
+    let mut table = table.write().expect("rw lock on tt to not be poisoned");
+    if table.len() >= CLEAR_SIZE {
+        println!(
+            "Transposition table reached {} entries, clearing...",
+            table.len()
+        );
+        table.clear();
+    }
 }
 
 pub fn probe_eval(table: &Table, gamestate: &GameState) -> Option<i32> {

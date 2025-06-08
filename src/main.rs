@@ -33,6 +33,7 @@ fn run_game() -> Option<()> {
     println!();
 
     loop {
+        transposition::check_for_table_clear(&transposition_table);
         println!("=====\n{:?}", board);
         match gamemode {
             Gamemode::PlayerVsPlayer => {
@@ -60,7 +61,6 @@ fn run_game() -> Option<()> {
                         // Yield to computer
                         player_color = board.current_player.opposite();
                         println!("Switching player color to {}.", player_color);
-                    
                     }
                 } else {
                     make_computer_turn(&mut board, &mut transposition_table);
@@ -172,9 +172,8 @@ fn make_human_turn(board: &mut GameState) -> ControlFlow<(), bool> {
     // User inputs 1-indexed column
     match input.parse::<u8>() {
         Ok(column) if column < 8 && column > 0 => {
-            if board.make_move(column - 1) {
-                
-            } else {
+            let is_full = board.make_move(column - 1);
+            if is_full {
                 println!("Column {} is full!", column);
             }
         }
