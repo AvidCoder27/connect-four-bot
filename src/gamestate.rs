@@ -8,21 +8,9 @@ const DEFAULT_STARTING_PLAYER: Color = Color::Red;
 const PIECE_ICON: &'static str = "●";
 const EMPTY_ICON: &'static str = "○";
 
-const RED_PIECE: &'static str = if USE_ICONS {
-    PIECE_ICON
-} else {
-    "R"
-};
-const YELLOW_PIECE: &'static str = if USE_ICONS {
-    PIECE_ICON
-} else {
-    "Y"
-};
-const EMPTY_PIECE: &'static str = if USE_ICONS {
-    EMPTY_ICON
-} else {
-    " "
-};
+const RED_PIECE: &'static str = if USE_ICONS { PIECE_ICON } else { "R" };
+const YELLOW_PIECE: &'static str = if USE_ICONS { PIECE_ICON } else { "Y" };
+const EMPTY_PIECE: &'static str = if USE_ICONS { EMPTY_ICON } else { " " };
 const FULL_BOARD_MASK: u64 = 0b_0111111_0111111_0111111_0111111_0111111_0111111_0111111; // 7 bits per column, MSB is sentinel
 
 #[derive(Clone, PartialEq, Eq, Hash)]
