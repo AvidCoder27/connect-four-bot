@@ -2,8 +2,27 @@ use crate::color::{Color, Gameover};
 use colored::*;
 use std::fmt;
 
-const PIECE_ICON: &'static str = "●";
+const USE_ICONS: bool = false;
 const DEFAULT_STARTING_PLAYER: Color = Color::Red;
+
+const PIECE_ICON: &'static str = "●";
+const EMPTY_ICON: &'static str = "○";
+
+const RED_PIECE: &'static str = if USE_ICONS {
+    PIECE_ICON
+} else {
+    "R"
+};
+const YELLOW_PIECE: &'static str = if USE_ICONS {
+    PIECE_ICON
+} else {
+    "Y"
+};
+const EMPTY_PIECE: &'static str = if USE_ICONS {
+    EMPTY_ICON
+} else {
+    " "
+};
 const FULL_BOARD_MASK: u64 = 0b_0111111_0111111_0111111_0111111_0111111_0111111_0111111; // 7 bits per column, MSB is sentinel
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -208,11 +227,11 @@ impl fmt::Debug for GameState {
                     f,
                     " {} ",
                     if self.red & mask != 0 {
-                        PIECE_ICON.red()
+                        RED_PIECE.red()
                     } else if self.yellow & mask != 0 {
-                        PIECE_ICON.yellow()
+                        YELLOW_PIECE.yellow()
                     } else {
-                        " ".white()
+                        EMPTY_PIECE.white()
                     }
                 )?;
             }
