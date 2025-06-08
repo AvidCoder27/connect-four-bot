@@ -30,33 +30,37 @@ fn run_game() -> Option<()> {
     override_starting_color(&mut board)?;
 
     println!("\nStarting game in {:?} mode", gamemode);
-    println!("Initial board state:");
-    println!("{:?}", board);
     println!();
 
     loop {
+        println!("=====\n{:?}", board);
         match gamemode {
             Gamemode::PlayerVsPlayer => {
-                let ctrl = make_player_turn(&mut board);
+                let ctrl = make_human_turn(&mut board);
                 if let ControlFlow::Break(_) = ctrl {
                     break;
                 }
-                if let ControlFlow::Continue(b) = ctrl {
-                    if b {
-                        // Switch to computer mode
-                        player_color = board.current_player.opposite();
-                        gamemode = Gamemode::PlayerVsComputer;
-                        println!(
-                            "Switching to Human vs Computer mode. Computer will play as {}.",
-                            player_color.opposite()
-                        );
-                    }
+                if let ControlFlow::Continue(true) = ctrl {
+                    // Switch to computer mode
+                    player_color = board.current_player.opposite();
+                    gamemode = Gamemode::PlayerVsComputer;
+                    println!(
+                        "Switching to Human vs Computer mode. Computer will play as {}.",
+                        player_color.opposite()
+                    );
                 }
             }
             Gamemode::PlayerVsComputer => {
                 if board.current_player == player_color {
-                    if let ControlFlow::Break(_) = make_player_turn(&mut board) {
+                    let ctrl = make_human_turn(&mut board);
+                    if let ControlFlow::Break(_) = ctrl {
                         break;
+                    }
+                    if let ControlFlow::Continue(true) = ctrl {
+                        // Yield to computer
+                        player_color = board.current_player.opposite();
+                        println!("Switching player color to {}.", player_color);
+                    
                     }
                 } else {
                     make_computer_turn(&mut board, &mut transposition_table);
@@ -81,7 +85,7 @@ fn run_game() -> Option<()> {
     }
 
     println!("Final board state:");
-    println!("{}", board.to_fen());
+    println!("{:?}", board);
     return None;
 }
 
@@ -137,7 +141,7 @@ fn read_input() -> Option<String> {
 }
 
 fn make_computer_turn(board: &mut GameState, transposition_table: &mut transposition::Table) {
-    println!("\n{} Computer turn", board.current_player);
+    println!("{} Computer's turn", board.current_player);
     let (column, eval) = engine::negamax_entrypoint(board, transposition_table);
     if board.make_move(column as u8) {
         println!(
@@ -146,7 +150,6 @@ fn make_computer_turn(board: &mut GameState, transposition_table: &mut transposi
             column + 1, // Convert to 1-indexed for display
             eval
         );
-        println!("\n{:?}", board);
     } else {
         panic!("Computer tried to play in a full column: {}", column + 1);
     }
@@ -155,8 +158,8 @@ fn make_computer_turn(board: &mut GameState, transposition_table: &mut transposi
 /// If all goes well, returns a ControlFlow::Continue(false) to switch to playing against the bot.
 /// If the user wants to quit, returns ControlFlow::Break(()).
 /// If the user wants to switch to playing against the bot, returns ControlFlow::Continue(true).
-fn make_player_turn(board: &mut GameState) -> ControlFlow<(), bool> {
-    println!("\n{}'s turn", board.current_player);
+fn make_human_turn(board: &mut GameState) -> ControlFlow<(), bool> {
+    println!("{} Human's turn", board.current_player);
     println!("Enter column number (1-7) or 'q' to quit or 's' to switch to playing against bot:");
     let input = match read_input() {
         Some(input) => input,
@@ -170,7 +173,7 @@ fn make_player_turn(board: &mut GameState) -> ControlFlow<(), bool> {
     match input.parse::<u8>() {
         Ok(column) if column < 8 && column > 0 => {
             if board.make_move(column - 1) {
-                println!("\n{:?}", board);
+                
             } else {
                 println!("Column {} is full!", column);
             }

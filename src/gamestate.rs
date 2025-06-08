@@ -219,7 +219,8 @@ impl fmt::Debug for GameState {
             writeln!(f, "|")?;
         }
 
-        writeln!(f, "  1  2  3  4  5  6  7") // Column indices
+        writeln!(f, "  1  2  3  4  5  6  7")?; // Column indices
+        writeln!(f, "\n{}", self.to_fen()) // Print FEN representation
     }
 }
 
